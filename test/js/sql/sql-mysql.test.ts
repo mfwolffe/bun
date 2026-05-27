@@ -84,6 +84,22 @@ if (isDockerEnabled()) {
           });
           expect(stderr).toBe("");
         });
+        describe.each(["Etc/UTC", "America/New_York", "Asia/Tokyo"])("TZ=%s", TZ => {
+          test("DATETIME Date round-trip is the identity", () => {
+            const { stdout } = bunRun(path.join(import.meta.dir, "sql-mysql-datetime-tz-fixture.ts"), {
+              ...bunEnv,
+              MYSQL_URL: getOptions().url,
+              CA_PATH: image.name === "MySQL with TLS" ? path.join(import.meta.dir, "mysql-tls", "ssl", "ca.pem") : "",
+              TZ,
+            });
+            // Assert the success token carries the right TZ string, and that the
+            // child runtime actually adopted a non-zero offset for the non-UTC
+            // zones — otherwise a silently-unapplied TZ would degenerate all three
+            // runs into the UTC case and stop exercising the local-time decode bug.
+            expect(stdout).toContain(`OK TZ=${TZ}`);
+            expect(stdout).toMatch(TZ === "Etc/UTC" ? /offsetMin=0\b/ : /offsetMin=-?[1-9]/);
+          });
+        });
         test("should return lastInsertRowid and affectedRows", async () => {
           await using db = new SQL({ ...getOptions(), max: 1, idleTimeout: 5 });
           using sql = await db.reserve();
