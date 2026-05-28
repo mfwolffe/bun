@@ -303,13 +303,19 @@ function llvmSearchPaths(os: OS, arch: Arch): string[] {
     paths.push("C:\\Program Files\\LLVM\\bin");
   }
 
-  if (os === "linux" || os === "darwin") {
+  if (os === "linux" || os === "darwin" || os === "freebsd") {
     paths.push("/usr/lib/llvm/bin");
     // Debian/Ubuntu-style suffixed paths
     paths.push(`/usr/lib/llvm-${LLVM_MAJOR}.${LLVM_MINOR}.0/bin`);
     paths.push(`/usr/lib/llvm-${LLVM_MAJOR}.${LLVM_MINOR}/bin`);
     paths.push(`/usr/lib/llvm-${LLVM_MAJOR}/bin`);
     paths.push(`/usr/lib/llvm${LLVM_MAJOR}/bin`);
+  }
+
+  if (os === "freebsd") {
+    // FreeBSD ports install to /usr/local with unsuffixed version numbers
+    paths.push(`/usr/local/llvm${LLVM_MAJOR}/bin`);
+    paths.push("/usr/local/bin");
   }
 
   return paths;
@@ -325,6 +331,7 @@ function llvmNameVariants(name: string): string[] {
     `${name}-${LLVM_MAJOR}.${LLVM_MINOR}.0`,
     `${name}-${LLVM_MAJOR}.${LLVM_MINOR}`,
     `${name}-${LLVM_MAJOR}`,
+    `${name}${LLVM_MAJOR}`, // FreeBSD ports: clang21, lld21
   ];
 }
 
